@@ -6,7 +6,7 @@ local player = Players.LocalPlayer
 
 -- === CONFIG KEY ===
 local FREE_KEY = "free123"
-local VIP_LIST_URL = "https://raw.githubusercontent.com/Bardenss/VIPKey/refs/heads/main/vip.json"
+local VIP_LIST_URL = "https://raw.githubusercontent.com/Bardenss/aduhbantai/refs/heads/main/vip.json"
 -- contoh isi vip.json:
 -- { "vip_users": ["Username1","Username2","Bardenss"] }
 

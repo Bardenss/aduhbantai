@@ -2,18 +2,249 @@
 local HttpService = game:GetService("HttpService")
 local RunService = game:GetService("RunService")
 local Players = game:GetService("Players")
+local TeleportService = game:GetService("TeleportService")
 local player = Players.LocalPlayer
 
--- === CONFIG KEY ===
-local FREE_KEY = "free123"
+local HttpService = game:GetService("HttpService")
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+
+local FREE_KEY = "FREE_4566"
 local VIP_LIST_URL = "https://raw.githubusercontent.com/Bardenss/aduhbantai/refs/heads/main/vip.json"
--- contoh isi vip.json:
--- { "vip_users": ["Username1","Username2","Bardenss"] }
+local accessLevel = "none"
 
--- === VARIABEL STATUS ===
-local accessLevel = "none" -- "free", "vip", "none"
+-- Foto profil Roblox
+local thumbType = Enum.ThumbnailType.HeadShot
+local thumbSize = Enum.ThumbnailSize.Size420x420
+local content, _ = Players:GetUserThumbnailAsync(player.UserId, thumbType, thumbSize)
 
--- === CEK VIP LIST AUTO-DETECT ===
+-- === GUI ===
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Parent = game.CoreGui
+ScreenGui.IgnoreGuiInset = true
+ScreenGui.ResetOnSpawn = false
+
+local Frame = Instance.new("Frame")
+Frame.Size = UDim2.new(0, 600, 0, 300)
+Frame.Position = UDim2.new(0.5, -300, 0.5, -150)
+Frame.BackgroundColor3 = Color3.fromRGB(20, 20, 40)
+Frame.BorderSizePixel = 0
+Frame.ClipsDescendants = true
+Frame.Parent = ScreenGui
+
+-- Foto profil (kiri)
+local Avatar = Instance.new("ImageLabel")
+Avatar.Size = UDim2.new(0, 260, 0, 260)
+Avatar.Position = UDim2.new(0, 20, 0.5, -130)
+Avatar.BackgroundTransparency = 1
+Avatar.Image = content
+Avatar.Parent = Frame
+
+-- Container kanan
+local Right = Instance.new("Frame")
+Right.Size = UDim2.new(0, 300, 0, 260)
+Right.Position = UDim2.new(0, 300, 0.5, -130)
+Right.BackgroundTransparency = 1
+Right.Parent = Frame
+
+-- Nama player
+local NameLabel = Instance.new("TextLabel")
+NameLabel.Size = UDim2.new(1,0,0,30)
+NameLabel.Position = UDim2.new(0,0,0,10)
+NameLabel.Text = ""
+NameLabel.Font = Enum.Font.Arcade
+NameLabel.TextColor3 = Color3.fromRGB(0,255,200)
+NameLabel.TextSize = 22
+NameLabel.BackgroundTransparency = 1
+NameLabel.Parent = Right
+
+-- Salam / teks tambahan
+local greet = Instance.new("TextLabel")
+greet.Size = UDim2.new(1,0,0,25)
+greet.Position = UDim2.new(0,0,0,50)
+greet.Text = ""
+greet.Font = Enum.Font.Arcade
+greet.TextColor3 = Color3.fromRGB(255,255,0)
+greet.TextSize = 18
+greet.BackgroundTransparency = 1
+greet.Parent = Right
+
+-- Input key
+local Input = Instance.new("TextBox")
+Input.Size = UDim2.new(1,0,0,30)
+Input.Position = UDim2.new(0,0,0,90)
+Input.PlaceholderText = "Masukkan key..."
+Input.Text = ""
+Input.BackgroundColor3 = Color3.fromRGB(40,40,70)
+Input.TextColor3 = Color3.fromRGB(255,255,255)
+Input.Font = Enum.Font.Arcade
+Input.TextSize = 16
+Input.Visible = false
+Input.Parent = Right
+
+-- Tombol submit
+local Submit = Instance.new("TextButton")
+Submit.Size = UDim2.new(1,0,0,28)
+Submit.Position = UDim2.new(0,0,0,130)
+Submit.Text = "UNLOCK"
+Submit.BackgroundColor3 = Color3.fromRGB(0,200,120)
+Submit.TextColor3 = Color3.fromRGB(0,0,0)
+Submit.Font = Enum.Font.Arcade
+Submit.TextSize = 16
+Submit.Visible = false
+Submit.Parent = Right
+
+-- Tombol Discord (akan muncul hanya free)
+local DiscordBtn = Instance.new("TextButton")
+DiscordBtn.Size = UDim2.new(1,0,0,28)
+DiscordBtn.Position = UDim2.new(0,0,0,170)
+DiscordBtn.Text = "JOIN DISCORD"
+DiscordBtn.BackgroundColor3 = Color3.fromRGB(88,101,242)
+DiscordBtn.TextColor3 = Color3.fromRGB(255,255,255)
+DiscordBtn.Font = Enum.Font.Arcade
+DiscordBtn.TextSize = 16
+DiscordBtn.Visible = false
+DiscordBtn.Parent = Right
+
+-- Tombol Help (pojok kiri bawah Frame)
+local HelpBtn = Instance.new("TextButton")
+HelpBtn.Size = UDim2.new(0,80,0,25)
+HelpBtn.Position = UDim2.new(0,10,1,-35)
+HelpBtn.Text = "HELP"
+HelpBtn.BackgroundColor3 = Color3.fromRGB(200,200,50)
+HelpBtn.TextColor3 = Color3.fromRGB(0,0,0)
+HelpBtn.Font = Enum.Font.Arcade
+HelpBtn.TextSize = 14
+HelpBtn.Visible = false
+HelpBtn.Parent = Frame
+
+-- Notif kecil
+local Notif = Instance.new("TextLabel")
+Notif.Size = UDim2.new(1,0,0,20)
+Notif.Position = UDim2.new(0,0,1,-20)
+Notif.BackgroundTransparency = 1
+Notif.TextColor3 = Color3.fromRGB(0,255,0)
+Notif.TextSize = 14
+Notif.Font = Enum.Font.Arcade
+Notif.Text = ""
+Notif.Parent = Frame
+
+-- Fungsi notif
+local function showNotif(msg,color)
+    Notif.Text = msg
+    Notif.TextColor3 = color or Color3.fromRGB(0,255,0)
+    task.delay(2,function() Notif.Text = "" end)
+end
+
+-- Fungsi bunga jatuh
+local function spawnFlower(color)
+    local flower = Instance.new("TextLabel")
+    flower.Size = UDim2.new(0,20,0,20)
+    flower.Text = "✿"
+    flower.TextColor3 = color
+    flower.BackgroundTransparency = 1
+    flower.Font = Enum.Font.Arcade
+    flower.TextSize = 20
+    flower.Position = UDim2.new(math.random(),0,0,-20)
+    flower.Parent = Frame
+
+    task.spawn(function()
+        local speed = math.random(30,60)/100
+        for i=1,120 do
+            flower.Position = flower.Position + UDim2.new(0, math.sin(i/10)*1, 0, speed*5)
+            flower.TextTransparency = i/120
+            task.wait(0.05)
+        end
+        flower:Destroy()
+    end)
+end
+
+-- Fungsi animasi
+local function playAnimations(isVIP)
+    Avatar.Visible = true
+
+    -- Nama typewriter
+    for i=1,#player.Name do
+        NameLabel.Text = string.sub(player.Name,1,i)
+        task.wait(0.1)
+    end
+
+    if isVIP then
+        task.spawn(function()
+            while ScreenGui.Parent do
+                spawnFlower(Color3.fromRGB(math.random(200,255), math.random(180,220), 0))
+                spawnFlower(Color3.fromRGB(180,0,220))
+                task.wait(0.5)
+            end
+        end)
+
+        task.wait(0.5)
+        NameLabel.Visible = false
+
+        local vipText = Instance.new("TextLabel")
+        vipText.Size = UDim2.new(1,0,0,50)
+        vipText.Position = UDim2.new(0,0,0,70)
+        vipText.Text = ""
+        vipText.Font = Enum.Font.Arcade
+        vipText.TextColor3 = Color3.fromRGB(255,215,0)
+        vipText.TextSize = 24
+        vipText.BackgroundTransparency = 1
+        vipText.Parent = Right
+
+        for i=1,#"WELCOME VIP USER" do
+            vipText.Text = string.sub("WELCOME VIP USER",1,i)
+            task.wait(0.1)
+        end
+
+        task.delay(2, function()
+            accessLevel = "vip"
+            ScreenGui:Destroy()
+        end)
+
+    else
+        local greets = {"Halo","Hello","こんにちは","Hola","Ciao","안녕"}
+        task.spawn(function()
+            while true do
+                for _,txt in ipairs(greets) do
+                    greet.Text = txt.." "..player.Name.."!"
+                    task.wait(2)
+                end
+            end
+        end)
+
+        task.spawn(function()
+            while ScreenGui.Parent do
+                spawnFlower(Color3.fromRGB(255,150,255))
+                task.wait(0.5)
+            end
+        end)
+
+        task.delay(3, function()
+            Input.Visible = true
+            Submit.Visible = true
+            DiscordBtn.Visible = true
+            HelpBtn.Visible = true
+        end)
+    end
+end
+
+-- Logic Key
+local function unlock(level)
+    accessLevel = level
+    ScreenGui:Destroy()
+end
+
+-- Event tombol
+DiscordBtn.MouseButton1Click:Connect(function()
+    setclipboard("https://discord.gg/VjYh9fVn")
+    showNotif("Link Discord dicopy!", Color3.fromRGB(0,200,255))
+end)
+
+HelpBtn.MouseButton1Click:Connect(function()
+    showNotif("Gunakan key FREE_4566 atau beli VIP.", Color3.fromRGB(255,255,0))
+end)
+
+-- Cek VIP
 local function isVIPUser()
     local ok, data = pcall(function()
         return HttpService:JSONDecode(game:HttpGet(VIP_LIST_URL))
@@ -28,88 +259,26 @@ local function isVIPUser()
     return false
 end
 
--- === BUAT UI SEDERHANA (Key Input) ===
-local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Parent = game.CoreGui
-ScreenGui.IgnoreGuiInset = true
+local vipUser = isVIPUser()
 
-local Frame = Instance.new("Frame")
-Frame.Size = UDim2.new(0, 350, 0, 180)
-Frame.Position = UDim2.new(0.5, -175, 0.5, -90)
-Frame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
-Frame.BorderSizePixel = 0
-Frame.Parent = ScreenGui
-
-local Title = Instance.new("TextLabel")
-Title.Size = UDim2.new(1, 0, 0, 40)
-Title.BackgroundTransparency = 1
-Title.Text = "🔑 Key System"
-Title.Font = Enum.Font.GothamBold
-Title.TextSize = 20
-Title.TextColor3 = Color3.fromRGB(255,255,255)
-Title.Parent = Frame
-
-local Input = Instance.new("TextBox")
-Input.Size = UDim2.new(0.8, 0, 0, 35)
-Input.Position = UDim2.new(0.1, 0, 0.4, 0)
-Input.PlaceholderText = "Masukkan Key..."
-Input.Text = ""
-Input.TextColor3 = Color3.fromRGB(255,255,255)
-Input.BackgroundColor3 = Color3.fromRGB(40,40,40)
-Input.BorderSizePixel = 0
-Input.Font = Enum.Font.Gotham
-Input.TextSize = 16
-Input.Parent = Frame
-
-local Button = Instance.new("TextButton")
-Button.Size = UDim2.new(0.5, 0, 0, 35)
-Button.Position = UDim2.new(0.25, 0, 0.75, 0)
-Button.Text = "Submit"
-Button.Font = Enum.Font.GothamBold
-Button.TextSize = 16
-Button.TextColor3 = Color3.fromRGB(255,255,255)
-Button.BackgroundColor3 = Color3.fromRGB(60,120,255)
-Button.BorderSizePixel = 0
-Button.Parent = Frame
-
-local Status = Instance.new("TextLabel")
-Status.Size = UDim2.new(1,0,0,20)
-Status.Position = UDim2.new(0,0,0.25,0)
-Status.BackgroundTransparency = 1
-Status.Font = Enum.Font.Gotham
-Status.TextSize = 14
-Status.TextColor3 = Color3.fromRGB(200,200,200)
-Status.Text = ""
-Status.Parent = Frame
-
--- === LOGIC KEY ===
-local function unlockUI(level)
-    accessLevel = level
-    ScreenGui:Destroy()
-end
-
--- Auto VIP detect
-if isVIPUser() then
-    unlockUI("vip")
+if vipUser then
+    playAnimations(true)
 else
-    -- tombol submit buat free key
-    Button.MouseButton1Click:Connect(function()
+    playAnimations(false)
+    Submit.MouseButton1Click:Connect(function()
         if Input.Text == FREE_KEY then
-            unlockUI("free")
+            unlock("free")
         else
-            Status.Text = "❌ Key salah!"
+            greet.Text = "❌ Key salah!"
         end
     end)
 end
 
--- === TUNGGU SAMPAI ADA AKSES ===
 repeat task.wait() until accessLevel ~= "none"
 
 --------------------------------------------------------
 -- === SETELAH KEY LULUS -> LOAD RAYFIELD & SEMUA TAB
 --------------------------------------------------------
-
--- Load Rayfield
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
 local Window = Rayfield:CreateWindow({
@@ -120,10 +289,10 @@ local Window = Rayfield:CreateWindow({
     Discord = { Enabled = false }
 })
 
--- === GLOBAL VARIABEL ===
+-- === GLOBAL VARS ===
 local running = false
 local antiFall = false
-local globalDelay = 3 -- default 3 detik
+local globalDelay = 3
 
 local function getHRP()
     local char = player.Character or player.CharacterAdded:Wait()
@@ -134,85 +303,117 @@ local function respawnPlayer()
     player.Character:BreakJoints()
 end
 
+-- === LOAD TRACK DARI GITHUB ===
+local function loadTrack(url)
+    local ok, track = pcall(function()
+        return loadstring(game:HttpGet(url))()
+    end)
+    if ok and track then
+        return track
+    else
+        warn("Gagal load track dari:", url)
+        return {}
+    end
+end
+
+-- URL track raw
+local DAUN01 = "https://raw.githubusercontent.com/Bardenss/Daun/refs/heads/main/01.lua"
+local DAUN12 = "https://raw.githubusercontent.com/Bardenss/Daun/refs/heads/main/12.lua"
+local DAUN23 = "https://raw.githubusercontent.com/Bardenss/Daun/refs/heads/main/23.lua"
+local DAUN34 = "https://raw.githubusercontent.com/Bardenss/Daun/refs/heads/main/34.lua"
+local DAUN45 = "https://raw.githubusercontent.com/Bardenss/Daun/refs/heads/main/45.lua"
+local ARK01 = "https://raw.githubusercontent.com/Bardenss/Arunika/refs/heads/main/01.lua"
+local ARK12 = "https://raw.githubusercontent.com/Bardenss/Arunika/refs/heads/main/12.lua"
+local ARK23 = "https://raw.githubusercontent.com/Bardenss/Arunika/refs/heads/main/23.lua"
+local ARK34 = "https://raw.githubusercontent.com/Bardenss/Arunika/refs/heads/main/34.lua"
+local ARK45 = "https://raw.githubusercontent.com/Bardenss/Arunika/refs/heads/main/45.lua"
+local ARK56 = "https://raw.githubusercontent.com/Bardenss/Arunika/refs/heads/main/56.lua"
+
+-- Load tracks
+local TDAUN01 = loadTrack(DAUN01)
+local TDAUN12 = loadTrack(DAUN12)
+local TDAUN23 = loadTrack(DAUN23)
+local TDAUN34 = loadTrack(DAUN34)
+local TDAUN45 = loadTrack(DAUN45)
+local TARK01 = loadTrack(ARK01)
+local TARK12 = loadTrack(ARK12)
+local TARK23 = loadTrack(ARK23)
+local TARK34 = loadTrack(ARK34)
+local TARK45 = loadTrack(ARK45)
+local TARK56 = loadTrack(ARK56)
+
+-- Track Tables
+local Track_Daun = {
+    ["0-1"]=TDAUN01,
+    ["1-2"]=TDAUN12,
+    ["2-3"]=TDAUN23,
+    ["3-4"]=TDAUN34,
+    ["4-Summit"]=TDAUN45
+}
+local Track_Arunika = {
+    ["0-1"]=TARK01,
+    ["1-2"]=TARK12,
+    ["2-3"]=TARK23,
+    ["3-4"]=TARK34,
+    ["4-5"]=TARK45,
+    ["5-SUMMIT"]=TARK56
+}
+
+-- === TRACK FUNCTIONS ===
 local function simplifyTrack(track, minDistance)
-    local simple, lastPos = {}, nil
-    for _, pos in ipairs(track) do
-        if not lastPos or (pos - lastPos).Magnitude >= minDistance then
-            table.insert(simple, pos)
-            lastPos = pos
+    local simple, last = {}, nil
+    for _, cf in ipairs(track) do
+        if not last or (cf.Position - last.Position).Magnitude >= minDistance then
+            table.insert(simple, cf)
+            last = cf
         end
     end
     return simple
 end
 
 function playTrack(track, speed)
-    if not track or #track < 2 then return end
-    local hrp = getHRP()
-    local smoothTrack = simplifyTrack(track, 3)
-
-    for i = 2, #smoothTrack do
+    local char = player.Character
+    if not char or not char:FindFirstChild("HumanoidRootPart") then
+        warn("Karakter / HRP belum siap")
+        return
+    end
+    local hrp = char.HumanoidRootPart
+    local smooth = simplifyTrack(track, 0)
+    for i=2,#smooth do
         if not running then break end
-        local startPos = smoothTrack[i-1]
-        local targetPos = smoothTrack[i]
-        local distance = (targetPos - startPos).Magnitude
-        local duration = distance / speed
+        local startC = smooth[i-1]
+        local targetC = smooth[i]
+        local dist = (targetC.Position - startC.Position).Magnitude
+        local duration = dist / speed
         local elapsed = 0
-
         while elapsed < duration and running do
             elapsed += RunService.Heartbeat:Wait()
             local alpha = math.clamp(elapsed/duration,0,1)
-            local currentPos = startPos:Lerp(targetPos, alpha)
-            hrp.CFrame = CFrame.new(currentPos)
-            hrp.AssemblyLinearVelocity = Vector3.new(0,5,0)
+            hrp.CFrame = startC:Lerp(targetC, alpha)
         end
     end
 end
 
--- === TEMPLATE BUAT TAB GUNUNG ===
-local function createMountainTab(tabName, trackURLs, orderedNames)
-    local Tab = Window:CreateTab(tabName, 4483362458)
-
-    -- load track DULU biar siap dipakai tombol
-    local savedTracks = {}
-    for name, url in pairs(trackURLs) do
-        local ok, data = pcall(function()
-            return HttpService:JSONDecode(game:HttpGet(url))
-        end)
-        if ok and data and data.points then
-            savedTracks[name] = {}
-            for _, p in ipairs(data.points) do
-                table.insert(savedTracks[name], Vector3.new(p[1], p[2], p[3]))
-            end
-        else
-            savedTracks[name] = {}
-        end
-    end
-
-    -- slider speed
+local function createMountainTab(name, trackTable, order)
+    local Tab = Window:CreateTab(name, 4483362458)
     local speed = 16
+
     Tab:CreateSlider({
-        Name = "Speed",
-        Range = {1,500},
-        Increment = 1,
-        Suffix = " studs/sec",
-        CurrentValue = 16,
-        Callback = function(val)
-            speed = val
-        end,
+        Name="Speed", Range={1,500}, Increment=1, Suffix="studs/sec", CurrentValue=speed,
+        Callback=function(val) speed=val end,
     })
 
-    -- auto summit loop
     Tab:CreateButton({
-        Name = "Auto Summit - Loop",
-        Callback = function()
+        Name="Auto Summit - Loop",
+        Callback=function()
             if running then return end
             running = true
             coroutine.wrap(function()
                 while running do
-                    for i, name in ipairs(orderedNames) do
+                    for i, nameStep in ipairs(order) do
                         if not running then break end
-                        playTrack(savedTracks[name], speed)
-                        if i < #orderedNames then
+                        playTrack(trackTable[nameStep], speed)
+                        if i < #order then
                             task.wait(globalDelay)
                         end
                     end
@@ -226,158 +427,354 @@ local function createMountainTab(tabName, trackURLs, orderedNames)
         end
     })
 
-    -- stop button
-    Tab:CreateButton({
-        Name = "Stop Track",
-        Callback = function()
-            running = false
-        end
-    })
+    Tab:CreateButton({ Name="Stop Track", Callback=function() running=false end })
 
-    -- button per track
-    for _, name in ipairs(orderedNames) do
+    for _, step in ipairs(order) do
         Tab:CreateButton({
-            Name = "Track "..name,
-            Callback = function()
+            Name="Track "..step,
+            Callback=function()
                 if running then return end
-                running = true
+                running=true
                 coroutine.wrap(function()
-                    playTrack(savedTracks[name], speed)
-                    running = false
+                    playTrack(trackTable[step], speed)
+                    running=false
                 end)()
             end
         })
     end
 end
 
--- === TAB MAIN ===
+-- === TAB UTAMA ===
 local TabMain = Window:CreateTab("Main", 4483362458)
 TabMain:CreateLabel("✅ Kamu login sebagai: "..accessLevel:upper())
 
--- Delay Input
+-- === TAB TOOLS ===
+local TabTools
+if accessLevel == "vip" then
+    TabTools = Window:CreateTab("Tools")
+
+    -- Fitur VIP
+    TabTools:CreateButton({ Name="Infinite Yield", Callback=function()
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source"))()
+end })
+
+TabTools:CreateButton({
+    Name = "Speec Coil",
+    Callback = function()
+        local Players = game:GetService("Players")
+        local player = Players.LocalPlayer
+        local speedValue = 23 -- kecepatan saat pakai coil
+
+        local function giveCoil(char)
+            local backpack = player:WaitForChild("Backpack")
+
+            if backpack:FindFirstChild("Speed Coil") or char:FindFirstChild("Speed Coil") then
+                return
+            end
+
+            local tool = Instance.new("Tool")
+            tool.Name = "Speed Coil"
+            tool.RequiresHandle = false -- hilangkan handle agar tangan tidak animasi
+            tool.Parent = backpack
+
+            -- jangan buat Handle atau mesh sama sekali
+
+            tool.Equipped:Connect(function()
+                local humanoid = char:FindFirstChildOfClass("Humanoid")
+                if humanoid then
+                    humanoid.WalkSpeed = speedValue
+                end
+            end)
+
+            tool.Unequipped:Connect(function()
+                local humanoid = char:FindFirstChildOfClass("Humanoid")
+                if humanoid then
+                    humanoid.WalkSpeed = 16
+                end
+            end)
+        end
+
+        if player.Character then
+            giveCoil(player.Character)
+        end
+
+        player.CharacterAdded:Connect(function(char)
+            task.wait(1)
+            giveCoil(char)
+        end)
+    end,
+})
+
+TabTools:CreateButton({
+    Name = "Gling Gui",
+    Callback = function()
+        loadstring(game:HttpGet("https://rawscripts.net/raw/Universal-Script-Fling-Gui-Op-47914"))()
+    end,
+})
+
+TabTools:CreateButton({
+    Name = "FPS Booster",
+    Callback = function()
+        repeat task.wait() until game:IsLoaded() and game.Players.LocalPlayer
+        loadstring(game:HttpGet("https://pastefy.app/08huVciY/raw"))()
+    end,
+})
+
+TabTools:CreateButton({
+    Name = "Tp Tool",
+    Callback = function()
+        local Players = game:GetService("Players")
+        local player = Players.LocalPlayer
+        local mouse = player:GetMouse()
+
+        -- Bikin tool baru
+        local tool = Instance.new("Tool")
+        tool.RequiresHandle = false
+        tool.Name = "TP Tool"
+        tool.Parent = player.Backpack
+
+        tool.Activated:Connect(function()
+            if mouse.Hit then
+                local char = player.Character
+                if char and char:FindFirstChild("HumanoidRootPart") then
+                    char.HumanoidRootPart.CFrame = CFrame.new(mouse.Hit.p + Vector3.new(0,3,0))
+                end
+            end
+        end)
+    end,
+})
+
+else
+    TabTools = Window:CreateTab("Tools 🔒")
+    TabTools:CreateLabel("🔒 Hanya untuk VIP!")
+end
+
+-- === TAB AUTO SUMMIT & TELEPORT PUNCAK ===
+local TabAuto = Window:CreateTab("Auto Summit", 4483362458)
+local TabTp   = Window:CreateTab("Teleport Puncak", 4483362458)
+
+-- === BUAT MOUNTAIN TABS ===
+if accessLevel=="vip" then
+    createMountainTab("Daun", Track_Daun, {"0-1","1-2","2-3","3-4","4-Summit"})
+else
+    Window:CreateTab("Daun 🔒", 4483362458):CreateLabel("🔒 Hanya untuk VIP!")
+end
+
+if accessLevel=="vip" then
+    createMountainTab("Arunika", Track_Arunika, {"0-1","1-2","2-3","3-4","4-5","5-Summit"})
+else
+    Window:CreateTab("Arunika 🔒", 4483362458):CreateLabel("🔒 Hanya untuk VIP!")
+end
+
+-- === SETUP AUTO SUMMIT FUNCTIONS ===
+local function createAutoSummit(name, positions, respawnDelay, stepDelay, options)
+    local enabled     = false
+    local cancelToken = nil
+    respawnDelay      = respawnDelay or 3
+    stepDelay         = stepDelay or 4
+    options           = options or {}
+    local autoRespawn = (options.autoRespawn ~= false)
+
+    local function start(char)
+        if cancelToken then cancelToken.cancelled = true end
+        local token = {cancelled = false}
+        cancelToken = token
+
+        task.spawn(function()
+            local hrp = char:WaitForChild("HumanoidRootPart", 10)
+            if not hrp then return end
+
+            while enabled and not token.cancelled and char.Parent do
+                for _, pos in ipairs(positions) do
+                    if not enabled or token.cancelled then break end
+                    hrp = char:FindFirstChild("HumanoidRootPart")
+                    if hrp then
+                        pcall(function() hrp.CFrame = pos end)
+                    end
+                    task.wait(stepDelay)
+                end
+
+                if autoRespawn and enabled and not token.cancelled and char:FindFirstChild("Humanoid") then
+                    task.wait(respawnDelay)
+                    pcall(function() char:BreakJoints() end)
+                end
+
+                task.wait(0.5)
+            end
+        end)
+    end
+
+    player.CharacterAdded:Connect(function(char)
+        if enabled then
+            task.wait(1)
+            local hrp = char:WaitForChild("HumanoidRootPart", 10)
+            if hrp then
+                hrp.CFrame = positions[#positions]
+            end
+            start(char)
+        end
+    end)
+
+    -- Toggle di TabAuto
+    TabAuto:CreateToggle({
+        Name = name,
+        CurrentValue = false,
+        Callback = function(value)
+            enabled = value
+            if enabled and player.Character then
+                start(player.Character)
+            elseif cancelToken then
+                cancelToken.cancelled = true
+                cancelToken = nil
+            end
+        end,
+    })
+
+    -- Button teleport di TabTp
+    TabTp:CreateButton({
+        Name = "PUNCAK " .. name,
+        Callback = function()
+            local char = player.Character
+            if char and char:FindFirstChild("HumanoidRootPart") then
+                char.HumanoidRootPart.CFrame = positions[#positions]
+            end
+        end,
+    })
+end
+
+-- === DAFTAR GUNUNG ===
+createAutoSummit("MOUNT ATIN", {CFrame.new(624.79, 1801.43, 3432.24), CFrame.new(781.23, 2166.03, 3921.29)},3,4)
+createAutoSummit("MOUNT CING", {CFrame.new(331.84, 139.41, 829.17), CFrame.new(137.58, 79.41, 355.69), CFrame.new(53.14, 79.41, 28.00)},3,4)
+createAutoSummit("MOUNT SUMBING", {CFrame.new(-225.54, 441.00, 2142.43), CFrame.new(-427.57, 849.00, 3204.18)},3,4)
+createAutoSummit("MOUNT AKHIRAT", {CFrame.new(-131.54, 420.40, -220.11), CFrame.new(-6.16, 948.63, -1051.36)},3,4)
+createAutoSummit("MOUNT HANAMI", {CFrame.new(515.81, 141.34, -121.60), CFrame.new(359.75, 195.70, -613.76)},1,3)
+createAutoSummit("MOUNT GAMPIL", {CFrame.new(570.05, 372.38, 144.33), CFrame.new(364.00, 432.40, -1245.00)},1,0,{autoRespawn=false})
+createAutoSummit("MOUNT YAHAYUK", {CFrame.new(-420.05, 249.64, 769.69), CFrame.new(-347.92, 388.64, 522.19)},1,1,{autoRespawn=false})
+
+-- === MOUNT ADUH (langsung teleport + auto rejoin) ===
+do
+    TabAuto:CreateToggle({
+        Name = "MOUNT ADUH",
+        CurrentValue = false,
+        Callback = function(value)
+            if value then
+                task.spawn(function()
+                    local char = player.Character or player.CharacterAdded:Wait()
+                    local hrp = char:WaitForChild("HumanoidRootPart", 10)
+                    if hrp then
+                        hrp.CFrame = CFrame.new(-805.00, 2744.41, 1248.00)
+                        task.wait(3)
+                        pcall(function() TeleportService:Teleport(game.PlaceId, player) end)
+                    end
+                end)
+            end
+        end,
+    })
+
+    TabTp:CreateButton({
+        Name = "PUNCAK MOUNT ADUH",
+        Callback = function()
+            local char = player.Character
+            if char and char:FindFirstChild("HumanoidRootPart") then
+                char.HumanoidRootPart.CFrame = CFrame.new(-805.00, 2744.41, 1248.00)
+            end
+        end,
+    })
+end
+
+-- === MAIN TAB SETTINGS (WalkSpeed, JumpHeight, AntiFall) ===
+
+local bypassActive = false
+local bypassConn
+
+local function setupBypass(char)
+    local humanoid = char:WaitForChild("Humanoid")
+    local hrp = char:WaitForChild("HumanoidRootPart")
+    local lastPos = hrp.Position
+
+    if bypassConn then bypassConn:Disconnect() end
+    bypassConn = RunService.RenderStepped:Connect(function()
+        if not hrp or not hrp.Parent then return end
+        if bypassActive then
+            local direction = (hrp.Position - lastPos)
+            local dist = direction.Magnitude
+            if dist > 0.01 then
+                local moveVector = direction.Unit * math.clamp(dist*5, 0, 1)
+                humanoid:Move(moveVector, false)
+            else
+                humanoid:Move(Vector3.zero, false)
+            end
+        end
+        lastPos = hrp.Position
+    end)
+end
+
+player.CharacterAdded:Connect(setupBypass)
+if player.Character then setupBypass(player.Character) end
+
+-- === TOGGLE DI TAB MAIN ===
+TabMain:CreateSlider({
+    Name="WalkSpeed", Range={10,500}, Increment=1, CurrentValue=16, Suffix="Speed",
+    Callback=function(val)
+        local char=player.Character
+        if char and char:FindFirstChild("Humanoid") then char.Humanoid.WalkSpeed=val end
+    end
+})
+
+TabMain:CreateSlider({
+    Name="Jump Height", Range={10,500}, Increment=1, CurrentValue=50, Suffix="Height",
+    Callback=function(val)
+        local char=player.Character
+        if char and char:FindFirstChild("Humanoid") then char.Humanoid.JumpPower=val end
+    end
+})
+
+TabMain:CreateToggle({
+    Name = "Bypass Animasi",
+    CurrentValue = false,
+    Callback = function(val)
+        bypassActive = val
+        Rayfield:Notify({
+            Title = "Bypass Animasi",
+            Content = val and "✅ Aktif" or "❌ Nonaktif",
+            Duration = 3
+        })
+    end
+})
+
 TabMain:CreateInput({
-    Name = "Custom Delay (detik)",
-    PlaceholderText = "Misal: 5",
-    RemoveTextAfterFocusLost = false,
-    Callback = function(Text)
-        local num = tonumber(Text)
+    Name="Custom Delay (detik)", PlaceholderText="Misal: 5", RemoveTextAfterFocusLost=false,
+    Callback=function(text)
+        local num = tonumber(text)
         if num then
-            globalDelay = num
-            Rayfield:Notify({
-                Title = "⏱ Delay Diupdate",
-                Content = "Delay antar track diubah jadi "..num.." detik",
-                Duration = 3
-            })
+            globalDelay=num
+            Rayfield:Notify({Title="⏱ Delay Diupdate", Content="Delay antar track "..num.." detik", Duration=3})
         else
-            Rayfield:Notify({
-                Title = "⚠️ Error",
-                Content = "Masukkan angka valid!",
-                Duration = 3
-            })
+            Rayfield:Notify({Title="⚠️ Error", Content="Masukkan angka valid!", Duration=3})
         end
     end
 })
 
--- Anti Fall Damage
-local function protectFallDamage(humanoid)
-    humanoid.StateChanged:Connect(function(_, newState)
-        if antiFall and newState == Enum.HumanoidStateType.Freefall then
-            humanoid:ChangeState(Enum.HumanoidStateType.GettingUp)
-        end
-    end)
+TabMain:CreateToggle({
+    Name="Anti Fall Damage", CurrentValue=false,
+    Callback=function(val)
+        antiFall=val
+        Rayfield:Notify({Title="Anti Fall Damage", Content=val and "✅ Aktif" or "❌ Nonaktif", Duration=3})
+    end
+})
 
-    humanoid.HealthChanged:Connect(function(hp)
-        if antiFall and hp < humanoid.MaxHealth then
-            humanoid.Health = humanoid.MaxHealth
-        end
-    end)
-end
+TabMain:CreateButton({ Name="Respawn Player", Callback=respawnPlayer })
 
+-- Setup Character AntiFall
 local function setupChar(char)
     local hum = char:WaitForChild("Humanoid")
-    protectFallDamage(hum)
+    hum.StateChanged:Connect(function(_,state)
+        if antiFall and state==Enum.HumanoidStateType.Freefall then hum:ChangeState(Enum.HumanoidStateType.GettingUp) end
+    end)
+    hum.HealthChanged:Connect(function(hp)
+        if antiFall and hp<hum.MaxHealth then hum.Health=hum.MaxHealth end
+    end)
 end
-
 player.CharacterAdded:Connect(setupChar)
-if player.Character then
-    setupChar(player.Character)
-end
+if player.Character then setupChar(player.Character) end
 
-TabMain:CreateToggle({
-   Name = "Anti Fall Damage",
-   CurrentValue = false,
-   Flag = "AntiFallToggle",
-   Callback = function(Value)
-       antiFall = Value
-       if Value then
-           Rayfield:Notify({ Title = "Anti Fall Damage", Content = "✅ Aktif", Duration = 3 })
-       else
-           Rayfield:Notify({ Title = "Anti Fall Damage", Content = "❌ Nonaktif", Duration = 3 })
-       end
-   end,
-})
-
-TabMain:CreateSlider({
-   Name = "WalkSpeed",
-   Range = {10, 500},
-   Increment = 1,
-   CurrentValue = 15,
-   Suffix = "Speed",
-   Callback = function(Value)
-      local char = player.Character
-      if char and char:FindFirstChild("Humanoid") then
-         char.Humanoid.WalkSpeed = Value
-      end
-   end,
-})
-
-TabMain:CreateSlider({
-    Name = "Jump Height",
-    Range = {10, 500},
-    Increment = 1,
-    CurrentValue = 50,
-    Suffix = "Height",
-    Callback = function(Value)
-        local char = player.Character
-        if char and char:FindFirstChild("Humanoid") then
-            char.Humanoid.JumpPower = Value
-        end
-    end,
-})
-
-TabMain:CreateButton({ Name = "Respawn Player", Callback = respawnPlayer })
-TabMain:CreateButton({ Name = "Admin Cmd", Callback = function()
-    loadstring(game:HttpGet("https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source"))()
-end })
-TabMain:CreateButton({ Name = "Recorder", Callback = function()
-    loadstring(game:HttpGet("https://raw.githubusercontent.com/Bardenss/perekam/refs/heads/main/utama"))()
-end })
-TabMain:CreateButton({ Name = "BOOST FPS", Callback = function()
-    repeat task.wait() until game:IsLoaded() and player
-    loadstring(game:HttpGet("https://pastefy.app/08huVciY/raw"))()
-end })
-
--- === TAB DAUN (FREE & VIP) ===
-if accessLevel == "free" or accessLevel == "vip" then
-    createMountainTab("Daun", {
-        ["0-1"] = "https://raw.githubusercontent.com/Bardenss/Daun/refs/heads/main/01.json",
-        ["1-2"] = "https://raw.githubusercontent.com/Bardenss/Daun/refs/heads/main/12.json",
-        ["2-3"] = "https://raw.githubusercontent.com/Bardenss/Daun/refs/heads/main/23.json",
-        ["3-4"] = "https://raw.githubusercontent.com/Bardenss/Daun/refs/heads/main/34.json",
-        ["4-SUMMIT"] = "https://raw.githubusercontent.com/Bardenss/Daun/refs/heads/main/45.json",
-    }, {"0-1","1-2","2-3","3-4","4-SUMMIT"})
-end
-
--- === TAB ARUNIKA (VIP ONLY) ===
-if accessLevel == "vip" then
-    createMountainTab("Arunika", {
-        ["0-1"] = "https://raw.githubusercontent.com/Bardenss/Arunika/refs/heads/main/01.json",
-        ["1-2"] = "https://raw.githubusercontent.com/Bardenss/Arunika/refs/heads/main/12.json",
-        ["2-3"] = "https://raw.githubusercontent.com/Bardenss/Arunika/refs/heads/main/23.json",
-        ["3-4"] = "https://raw.githubusercontent.com/Bardenss/Arunika/refs/heads/main/34.json",
-        ["4-5"] = "https://raw.githubusercontent.com/Bardenss/Arunika/refs/heads/main/45.json",
-        ["5-SUMMIT"] = "https://raw.githubusercontent.com/Bardenss/Arunika/refs/heads/main/5summit.json",
-    }, {"0-1","1-2","2-3","3-4","4-5","5-SUMMIT"})
-else
-    Window:CreateTab("Arunika 🔒", 4483362458):CreateLabel("🔒 Hanya untuk VIP!")
-end
